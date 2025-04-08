@@ -1,26 +1,51 @@
 package handlers
 
 import (
-	"encoding/json"
 	"net/http"
+	"projectGolang/db"
 	"projectGolang/models"
+
+	"github.com/gin-gonic/gin"
 )
 
-var categories = []models.Category{
-	{ID: 1, Name: "Smartphones"},
-	{ID: 2, Name: "Laptops"},
+func GetCategories(c *gin.Context) {
+	var categories []models.Category
+	db.DB.Find(&categories)
+	c.JSON(http.StatusOK, categories)
 }
 
-func GetCategories(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(categories)
-}
-
-func CreateCategory(w http.ResponseWriter, r *http.Request) {
+func CreateCategory(c *gin.Context) {
 	var category models.Category
-	json.NewDecoder(r.Body).Decode(&category)
-	category.ID = len(categories) + 1
-	categories = append(categories, category)
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(category)
+	if err := c.ShouldBindJSON(&category); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	db.DB.Create(&category)
+	c.JSON(http.StatusOK, category)
+}
+
+func UpdateCategory(c *gin.Context) {
+	id := c.Param("id")
+	var category models.Category
+	if err := db.DB.First(&category, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Category not found"})
+		return
+	}
+	if err := c.ShouldBindJSON(&category); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	db.DB.Save(&category)
+	c.JSON(http.StatusOK, category)
+}
+
+func DeleteCategory(c *gin.Context) {
+	id := c.Param("id")
+	var category models.Category
+	if err := db.DB.First(&category, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Category not found"})
+		return
+	}
+	db.DB.Delete(&category)
+	c.Status(http.StatusNoContent)
 }

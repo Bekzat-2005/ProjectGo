@@ -2,30 +2,35 @@ package main
 
 import (
 	"log"
-	"net/http"
+	"projectGolang/db"
 	"projectGolang/handlers"
 
-	"github.com/gorilla/mux"
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	r := mux.NewRouter()
+	db.InitDB()
 
-	// Product routes
-	r.HandleFunc("/products", handlers.GetProducts).Methods("GET")
-	r.HandleFunc("/products/{id}", handlers.GetProduct).Methods("GET")
-	r.HandleFunc("/products", handlers.CreateProduct).Methods("POST")
-	r.HandleFunc("/products/{id}", handlers.UpdateProduct).Methods("PUT")
-	r.HandleFunc("/products/{id}", handlers.DeleteProduct).Methods("DELETE")
+	r := gin.Default()
 
-	// Category routes
-	r.HandleFunc("/categories", handlers.GetCategories).Methods("GET")
-	r.HandleFunc("/categories", handlers.CreateCategory).Methods("POST")
+	// Users
+	r.GET("/users", handlers.GetUsers)
+	r.POST("/users", handlers.CreateUser)
+	r.PUT("/users/:id", handlers.UpdateUser)
+	r.DELETE("/users/:id", handlers.DeleteUser)
 
-	// User routes
-	r.HandleFunc("/users", handlers.GetUsers).Methods("GET")
-	r.HandleFunc("/users", handlers.CreateUser).Methods("POST")
+	// Categories
+	r.GET("/categories", handlers.GetCategories)
+	r.POST("/categories", handlers.CreateCategory)
+	r.PUT("/categories/:id", handlers.UpdateCategory)
+	r.DELETE("/categories/:id", handlers.DeleteCategory)
 
-	log.Println("Server running on port 8000")
-	http.ListenAndServe(":8000", r)
+	// Products
+	r.GET("/products", handlers.GetProducts)
+	r.POST("/products", handlers.CreateProduct)
+	r.PUT("/products/:id", handlers.UpdateProduct)
+	r.DELETE("/products/:id", handlers.DeleteProduct)
+
+	log.Println("Server started at :8080")
+	r.Run(":8080")
 }
