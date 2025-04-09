@@ -13,6 +13,15 @@ func GetCategories(c *gin.Context) {
 	db.DB.Find(&categories)
 	c.JSON(http.StatusOK, categories)
 }
+func GetCategoryByID(c *gin.Context) {
+	id := c.Param("id")
+	var category models.Category
+	if err := db.DB.First(&category, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Category not found"})
+		return
+	}
+	c.JSON(http.StatusOK, category)
+}
 
 func CreateCategory(c *gin.Context) {
 	var category models.Category

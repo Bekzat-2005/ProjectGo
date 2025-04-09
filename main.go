@@ -15,12 +15,14 @@ func main() {
 
 	// Users
 	r.GET("/users", handlers.GetUsers)
+	r.GET("/users/:id", handlers.GetUserByID)
 	r.POST("/users", handlers.CreateUser)
 	r.PUT("/users/:id", handlers.UpdateUser)
 	r.DELETE("/users/:id", handlers.DeleteUser)
 
 	// Categories
 	r.GET("/categories", handlers.GetCategories)
+	r.GET("/categories/:id", handlers.GetCategoryByID)
 	r.POST("/categories", handlers.CreateCategory)
 	r.PUT("/categories/:id", handlers.UpdateCategory)
 	r.DELETE("/categories/:id", handlers.DeleteCategory)
@@ -28,6 +30,7 @@ func main() {
 	// Products
 	r.GET("/products", handlers.GetProducts)
 	r.POST("/products", handlers.CreateProduct)
+	r.GET("/products/:id", handlers.GetProductByID)
 	r.PUT("/products/:id", handlers.UpdateProduct)
 	r.DELETE("/products/:id", handlers.DeleteProduct)
 
