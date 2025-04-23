@@ -26,6 +26,8 @@ func main() {
 	auth.POST("/users", handlers.CreateUser)
 	auth.PUT("/users/:id", handlers.UpdateUser)
 	auth.DELETE("/users/:id", handlers.DeleteUser)
+	auth.GET("/profile", handlers.GetProfile)
+	auth.PUT("/profile/password", handlers.ChangePassword)
 
 	// Categories (protected)
 	auth.GET("/categories", handlers.GetCategories)
@@ -40,6 +42,7 @@ func main() {
 	auth.POST("/products", handlers.CreateProduct)
 	auth.PUT("/products/:id", handlers.UpdateProduct)
 	auth.DELETE("/products/:id", handlers.DeleteProduct)
+	auth.GET("/products/search", handlers.SearchProducts)
 
 	log.Println("Server started at :8080")
 	r.Run(":8080")

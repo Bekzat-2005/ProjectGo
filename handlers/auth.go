@@ -3,6 +3,7 @@ package handlers
 
 import (
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -27,7 +28,11 @@ func Register(c *gin.Context) {
 	input.Role = "user" // по умолчанию
 
 	if err := db.DB.Create(&input).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Registration failed"})
+		if strings.Contains(err.Error(), "duplicate key") || strings.Contains(err.Error(), "unique") {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Username already exists"})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Registration failed"})
+		}
 		return
 	}
 

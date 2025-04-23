@@ -99,3 +99,22 @@ func DeleteProduct(c *gin.Context) {
 	db.DB.Delete(&product)
 	c.Status(http.StatusNoContent)
 }
+func SearchProducts(c *gin.Context) {
+	name := c.Query("name")
+
+	var products []models.Product
+	query := db.DB
+
+	if name != "" {
+		query = query.Where("name ILIKE ?", "%"+name+"%")
+	}
+
+	query.Find(&products)
+
+	if len(products) == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Product not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, products)
+}

@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"fmt"
+	"golang.org/x/crypto/bcrypt"
 	"net/http"
 	"projectGolang/db"
 	"projectGolang/models"
@@ -58,4 +60,47 @@ func DeleteUser(c *gin.Context) {
 	}
 	db.DB.Delete(&user)
 	c.Status(http.StatusNoContent)
+}
+
+func GetProfile(c *gin.Context) {
+	userID := c.GetInt("user_id")
+	fmt.Println("🔎 userID from token:", userID) // временно!
+
+	var user models.User
+	if err := db.DB.First(&user, userID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+	c.JSON(http.StatusOK, user)
+}
+func ChangePassword(c *gin.Context) {
+	var req struct {
+		OldPassword string `json:"old_password"`
+		NewPassword string `json:"new_password"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request", "details": err.Error()})
+		return
+	}
+
+	userID := c.GetInt("user_id")
+	var user models.User
+	if err := db.DB.First(&user, userID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+
+	// Проверка старого пароля
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.OldPassword)); err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Incorrect old password"})
+		return
+	}
+
+	// Хешируем и обновляем пароль
+	hashedNew, _ := bcrypt.GenerateFromPassword([]byte(req.NewPassword), bcrypt.DefaultCost)
+	user.Password = string(hashedNew)
+	db.DB.Save(&user)
+
+	c.JSON(http.StatusOK, gin.H{"message": "Password changed successfully"})
 }
