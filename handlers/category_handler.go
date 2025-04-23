@@ -4,13 +4,41 @@ import (
 	"net/http"
 	"projectGolang/db"
 	"projectGolang/models"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
+//func GetCategories(c *gin.Context) {
+//	var categories []models.Category
+//	db.DB.Find(&categories)
+//	c.JSON(http.StatusOK, categories)
+//}
+
 func GetCategories(c *gin.Context) {
 	var categories []models.Category
-	db.DB.Find(&categories)
+
+	limit := 10
+	page := 1
+
+	if l := c.Query("limit"); l != "" {
+		if val, err := strconv.Atoi(l); err == nil {
+			limit = val
+		}
+	}
+	if p := c.Query("page"); p != "" {
+		if val, err := strconv.Atoi(p); err == nil {
+			page = val
+		}
+	}
+
+	query := db.DB.Limit(limit).Offset((page - 1) * limit)
+
+	if err := query.Find(&categories).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
 	c.JSON(http.StatusOK, categories)
 }
 func GetCategoryByID(c *gin.Context) {

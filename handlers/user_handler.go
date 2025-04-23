@@ -6,13 +6,47 @@ import (
 	"net/http"
 	"projectGolang/db"
 	"projectGolang/models"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
+//func GetUsers(c *gin.Context) {
+//	var users []models.User
+//	db.DB.Find(&users)
+//	c.JSON(http.StatusOK, users)
+//}
+
 func GetUsers(c *gin.Context) {
 	var users []models.User
-	db.DB.Find(&users)
+
+	limit := 10
+	page := 1
+
+	if l := c.Query("limit"); l != "" {
+		if val, err := strconv.Atoi(l); err == nil {
+			limit = val
+		}
+	}
+	if p := c.Query("page"); p != "" {
+		if val, err := strconv.Atoi(p); err == nil {
+			page = val
+		}
+	}
+
+	query := db.DB.Limit(limit).Offset((page - 1) * limit)
+
+	// Фильтр по роли (admin/user)
+	role := c.Query("role")
+	if role != "" {
+		query = query.Where("role = ?", role)
+	}
+
+	if err := query.Find(&users).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
 	c.JSON(http.StatusOK, users)
 }
 
