@@ -59,3 +59,22 @@ func TestLoginSuccess(t *testing.T) {
 	assert.Equal(t, http.StatusOK, wLogin.Code)
 	assert.Contains(t, wLogin.Body.String(), "token")
 }
+
+// 1. Сначала регистрируем пользователя
+//registerBody := `{"name":"Login User","username":"loginuser1","password":"123456"}`
+//reqRegister, _ := http.NewRequest("POST", "/register", strings.NewReader(registerBody))
+//reqRegister.Header.Set("Content-Type", "application/json")
+//wRegister := httptest.NewRecorder()
+//router.ServeHTTP(wRegister, reqRegister)
+//assert.Equal(t, http.StatusOK, wRegister.Code)
+//
+//// 2. Затем логинимся
+//loginBody := `{"username":"loginuser1","password":"123456"}`
+//reqLogin, _ := http.NewRequest("POST", "/login", strings.NewReader(loginBody))
+//reqLogin.Header.Set("Content-Type", "application/json")
+//wLogin := httptest.NewRecorder()
+//router.ServeHTTP(wLogin, reqLogin)
+//
+//assert.Equal(t, http.StatusOK, wLogin.Code)
+//assert.Contains(t, wLogin.Body.String(), "token")
+//}
