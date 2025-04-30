@@ -2,16 +2,16 @@
 package handlers
 
 import (
+	"github.com/golang-jwt/jwt/v5"
 	"net/http"
+	"projectGolang/models"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 
 	"projectGolang/db"
-	"projectGolang/models"
 )
 
 var jwtKey = []byte("secret-key")

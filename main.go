@@ -1,4 +1,3 @@
-// main.go
 package main
 
 import (
@@ -13,7 +12,8 @@ import (
 func main() {
 	db.InitDB()
 
-	r := gin.Default()
+	r := gin.New()
+	r.Use(gin.Recovery(), middleware.LoggerMiddleware())
 
 	r.POST("/register", handlers.Register)
 	r.POST("/login", handlers.Login)
@@ -35,14 +35,6 @@ func main() {
 	auth.POST("/categories", handlers.CreateCategory)
 	auth.PUT("/categories/:id", handlers.UpdateCategory)
 	auth.DELETE("/categories/:id", handlers.DeleteCategory)
-
-	// Products (protected)
-	auth.GET("/products", handlers.GetProducts)
-	auth.GET("/products/:id", handlers.GetProductByID)
-	auth.POST("/products", handlers.CreateProduct)
-	auth.PUT("/products/:id", handlers.UpdateProduct)
-	auth.DELETE("/products/:id", handlers.DeleteProduct)
-	auth.GET("/products/search", handlers.SearchProducts)
 
 	log.Println("Server started at :8080")
 	r.Run(":8080")

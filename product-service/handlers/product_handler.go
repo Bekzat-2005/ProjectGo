@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"projectGolang/db"
 	"projectGolang/models"
+	"projectGolang/product-service/client"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -117,4 +118,29 @@ func SearchProducts(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, products)
+}
+
+// 👇 добавь этот хендлер к остальным
+func GetProfileFromUserService(c *gin.Context) {
+	authHeader := c.GetHeader("Authorization")
+	if authHeader == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Missing token"})
+		return
+	}
+
+	// Обрезаем "Bearer " если есть
+	token := ""
+	if len(authHeader) > 7 && authHeader[:7] == "Bearer " {
+		token = authHeader[7:]
+	} else {
+		token = authHeader
+	}
+
+	profile, err := client.GetUserProfile(token)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch profile"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"profile": profile})
 }

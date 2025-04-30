@@ -6,7 +6,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"projectGolang/db"
+	userhandlers "projectGolang/handlers"
 	"projectGolang/middleware"
 	"projectGolang/models"
 	"strings"
@@ -16,13 +18,19 @@ import (
 )
 
 func setupTestRouter() *gin.Engine {
+	os.Setenv("DB_NAME", "startios_test")
 	db.InitDB()
+
+	// Миграции
+	db.DB.AutoMigrate(&models.Product{}, &models.User{}, &models.Category{})
+
+	// Очистка
 	db.DB.Exec("DELETE FROM products")
 	db.DB.Exec("DELETE FROM users")
 
 	r := gin.Default()
-	r.POST("/register", Register)
-	r.POST("/login", Login)
+	r.POST("/register", userhandlers.Register)
+	r.POST("/login", userhandlers.Login)
 
 	auth := r.Group("/", middleware.AuthMiddleware())
 	auth.GET("/products", GetProducts)
@@ -31,8 +39,8 @@ func setupTestRouter() *gin.Engine {
 	auth.PUT("/products/:id", UpdateProduct)
 	auth.DELETE("/products/:id", DeleteProduct)
 	auth.GET("/products/search", SearchProducts)
-	auth.GET("/profile", GetProfile)
-	auth.PUT("/profile/password", ChangePassword)
+	auth.GET("/profile", userhandlers.GetProfile)
+	auth.PUT("/profile/password", userhandlers.ChangePassword)
 
 	return r
 }
@@ -51,10 +59,11 @@ func getAuthToken(t *testing.T, router *gin.Engine) string {
 	router.ServeHTTP(wLogin, reqLogin)
 
 	var resp map[string]string
-	json.Unmarshal(wLogin.Body.Bytes(), &resp)
+	_ = json.Unmarshal(wLogin.Body.Bytes(), &resp)
 
 	return resp["token"]
 }
+
 func TestCreateProduct_Success(t *testing.T) {
 	router := setupTestRouter()
 	token := getAuthToken(t, router)
@@ -70,11 +79,11 @@ func TestCreateProduct_Success(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.Contains(t, w.Body.String(), "Test Product")
 }
+
 func TestGetProducts_Success(t *testing.T) {
 	router := setupTestRouter()
 	token := getAuthToken(t, router)
 
-	// Create a product
 	productBody := `{"name":"Product 1","category_id":1,"price":99.99}`
 	reqCreate, _ := http.NewRequest("POST", "/products", strings.NewReader(productBody))
 	reqCreate.Header.Set("Content-Type", "application/json")
@@ -82,7 +91,6 @@ func TestGetProducts_Success(t *testing.T) {
 	wCreate := httptest.NewRecorder()
 	router.ServeHTTP(wCreate, reqCreate)
 
-	// GET all products
 	reqGet, _ := http.NewRequest("GET", "/products", nil)
 	reqGet.Header.Set("Authorization", "Bearer "+token)
 	wGet := httptest.NewRecorder()
@@ -96,7 +104,6 @@ func TestGetProductByID_Success(t *testing.T) {
 	router := setupTestRouter()
 	token := getAuthToken(t, router)
 
-	// Create product
 	createBody := `{"name":"PlayStation","category_id":1,"price":500}`
 	reqCreate, _ := http.NewRequest("POST", "/products", strings.NewReader(createBody))
 	reqCreate.Header.Set("Authorization", "Bearer "+token)
@@ -115,11 +122,11 @@ func TestGetProductByID_Success(t *testing.T) {
 	assert.Equal(t, http.StatusOK, wGet.Code)
 	assert.Contains(t, wGet.Body.String(), "PlayStation")
 }
+
 func TestUpdateProduct_Success(t *testing.T) {
 	router := setupTestRouter()
 	token := getAuthToken(t, router)
 
-	// Создаем продукт
 	createBody := `{"name":"Old Name","category_id":1,"price":10}`
 	reqCreate, _ := http.NewRequest("POST", "/products", strings.NewReader(createBody))
 	reqCreate.Header.Set("Authorization", "Bearer "+token)
@@ -130,7 +137,6 @@ func TestUpdateProduct_Success(t *testing.T) {
 	var created models.Product
 	_ = json.Unmarshal(wCreate.Body.Bytes(), &created)
 
-	// Обновляем
 	updateBody := `{"name":"New Name","category_id":1,"price":20}`
 	reqUpdate, _ := http.NewRequest("PUT", fmt.Sprintf("/products/%d", created.ID), strings.NewReader(updateBody))
 	reqUpdate.Header.Set("Authorization", "Bearer "+token)
@@ -146,7 +152,6 @@ func TestDeleteProduct_Success(t *testing.T) {
 	router := setupTestRouter()
 	token := getAuthToken(t, router)
 
-	// Создаем продукт
 	createBody := `{"name":"To Be Deleted","category_id":1,"price":10}`
 	reqCreate, _ := http.NewRequest("POST", "/products", strings.NewReader(createBody))
 	reqCreate.Header.Set("Authorization", "Bearer "+token)
@@ -157,7 +162,6 @@ func TestDeleteProduct_Success(t *testing.T) {
 	var created models.Product
 	_ = json.Unmarshal(wCreate.Body.Bytes(), &created)
 
-	// Удаляем
 	reqDelete, _ := http.NewRequest("DELETE", fmt.Sprintf("/products/%d", created.ID), nil)
 	reqDelete.Header.Set("Authorization", "Bearer "+token)
 	wDelete := httptest.NewRecorder()
@@ -165,11 +169,11 @@ func TestDeleteProduct_Success(t *testing.T) {
 
 	assert.Equal(t, http.StatusNoContent, wDelete.Code)
 }
+
 func TestSearchProduct_Success(t *testing.T) {
 	router := setupTestRouter()
 	token := getAuthToken(t, router)
 
-	// Создаем продукт
 	createBody := `{"name":"UniqueProductXYZ","category_id":1,"price":999}`
 	reqCreate, _ := http.NewRequest("POST", "/products", strings.NewReader(createBody))
 	reqCreate.Header.Set("Authorization", "Bearer "+token)
@@ -177,7 +181,6 @@ func TestSearchProduct_Success(t *testing.T) {
 	wCreate := httptest.NewRecorder()
 	router.ServeHTTP(wCreate, reqCreate)
 
-	// Поиск
 	reqSearch, _ := http.NewRequest("GET", "/products/search?name=xyz", nil)
 	reqSearch.Header.Set("Authorization", "Bearer "+token)
 	wSearch := httptest.NewRecorder()
@@ -186,6 +189,7 @@ func TestSearchProduct_Success(t *testing.T) {
 	assert.Equal(t, http.StatusOK, wSearch.Code)
 	assert.Contains(t, wSearch.Body.String(), "UniqueProductXYZ")
 }
+
 func TestGetProfile_Success(t *testing.T) {
 	router := setupTestRouter()
 	token := getAuthToken(t, router)
@@ -197,13 +201,13 @@ func TestGetProfile_Success(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Contains(t, w.Body.String(), "Test User") // или имя, которое ты указываешь при регистрации
+	assert.Contains(t, w.Body.String(), "Test User")
 }
+
 func TestChangePassword_Success(t *testing.T) {
 	router := setupTestRouter()
 	token := getAuthToken(t, router)
 
-	// Меняем пароль
 	changeBody := `{
 		"old_password": "123456",
 		"new_password": "654321"
