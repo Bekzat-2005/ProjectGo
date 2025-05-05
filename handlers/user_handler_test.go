@@ -4,13 +4,13 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"projectGolang/models"
+	"projectGolang/db"
+	models2 "projectGolang/models"
 	"strings"
 	"testing"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
-	"projectGolang/db"
 )
 
 // setupRouter настраивает тестовый Gin router
@@ -18,7 +18,7 @@ func setupRouter() *gin.Engine {
 	os.Setenv("DB_NAME", "startios_test") // подключение к тестовой базе
 	db.InitDB()
 
-	db.DB.AutoMigrate(&models.User{}, &models.Product{}, &models.Category{})
+	db.DB.AutoMigrate(&models2.User{}, &models2.Product{}, &models2.Category{})
 	// Очистим таблицу users
 	db.DB.Exec("DELETE FROM users")
 

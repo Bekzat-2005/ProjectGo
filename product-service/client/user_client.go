@@ -1,6 +1,7 @@
 package client
 
 import (
+	"fmt"
 	"github.com/go-resty/resty/v2"
 	"log"
 )
@@ -22,11 +23,33 @@ func init() {
 func GetUserProfile(token string) (string, error) {
 	resp, err := client.R().
 		SetHeader("Authorization", "Bearer "+token).
-		Get("http://localhost:8080/profile")
+		Get("http://user-service:8080/profile")
 
 	if err != nil {
 		return "", err
 	}
 
 	return resp.String(), nil
+}
+func GetUserByID(userID uint, token string) (map[string]interface{}, error) {
+	var result map[string]interface{}
+
+	resp, err := client.R(). // ✅ дайын client қолдан
+					SetHeader("Authorization", "Bearer "+token).
+					SetResult(&result).
+					Get(fmt.Sprintf("http://user-service:8080/users/%d", userID))
+
+	if err != nil {
+		log.Printf("⚠️ Error fetching user: %v", err)
+		return nil, err
+	}
+
+	log.Printf("📨 Status: %d", resp.StatusCode())
+	log.Printf("📨 Body: %s", resp.String())
+
+	if resp.StatusCode() != 200 {
+		return nil, fmt.Errorf("user-service returned %d", resp.StatusCode())
+	}
+
+	return result, nil
 }

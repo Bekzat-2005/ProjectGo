@@ -1,17 +1,15 @@
-// handlers/auth.go
 package handlers
 
 import (
 	"github.com/golang-jwt/jwt/v5"
 	"net/http"
+	"projectGolang/db"
 	"projectGolang/models"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
-
-	"projectGolang/db"
 )
 
 var jwtKey = []byte("secret-key")

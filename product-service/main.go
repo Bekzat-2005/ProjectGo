@@ -3,25 +3,27 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	"log"
-	"projectGolang/product-service/db"
+	"projectGolang/db"
+	"projectGolang/middleware"
 	"projectGolang/product-service/handlers"
-	"projectGolang/product-service/middleware"
 )
 
 func main() {
-	db.InitDB() // ✅ Не забудь вызвать инициализацию базы
-
+	db.InitDB()
 	r := gin.New()
 	r.Use(gin.Recovery(), middleware.LoggerMiddleware())
 
+	// 👇 Ашық маршруттар
 	r.GET("/products", handlers.GetProducts)
 	r.GET("/products/:id", handlers.GetProductByID)
-	r.POST("/products", handlers.CreateProduct)
-	r.PUT("/products/:id", handlers.UpdateProduct)
-	r.DELETE("/products/:id", handlers.DeleteProduct)
 	r.GET("/products/search", handlers.SearchProducts)
 
-	r.GET("/products/profile", handlers.GetProfileFromUserService)
+	// 👇 Қорғалған маршруттар (токен қажет)
+	auth := r.Group("/", middleware.AuthMiddleware())
+	auth.GET("/products/profile", handlers.GetProfileFromUserService)
+	auth.POST("/products", handlers.CreateProduct)
+	auth.PUT("/products/:id", handlers.UpdateProduct)
+	auth.DELETE("/products/:id", handlers.DeleteProduct)
 
 	log.Println("✅ ProductService started at :8081")
 	r.Run(":8081")
