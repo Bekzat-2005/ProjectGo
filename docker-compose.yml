@@ -32,6 +32,18 @@ services:
       - postgres
       - user-service
 
+  frontend:
+    build:
+      context: ../../frontend    # путь до папки с Angular
+      dockerfile: Dockerfile
+    container_name: frontend
+    ports:
+      - "4200:80"
+    depends_on:
+      - user-service
+      - product-service
+
+
   postgres:
     image: postgres:15
     container_name: postgres

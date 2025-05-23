@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/gin-contrib/cors" // 👈 добавь это
 	"github.com/gin-gonic/gin"
 	"log"
 	"projectGolang/db"
@@ -13,6 +14,14 @@ func main() {
 
 	r := gin.New()
 	r.Use(gin.Recovery(), middleware.LoggerMiddleware())
+
+	// 🔥 ВАЖНО: добавь CORS middleware
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:4200"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		AllowCredentials: true,
+	}))
 
 	r.POST("/register", handlers.Register)
 	r.POST("/login", handlers.Login)
